@@ -163,15 +163,15 @@ function Base.fetch(c::Client, path::Union{Symbol,String}; query=Dict())
     CSV.read(buf)
 end
 
-function _handle_state(states::AbstractVector{Int})
+function _handle_state(states::AbstractVector{<:Integer})
     want = map(x -> in(x, states), CMDC._counties[][!, :state])
     return vcat(collect(_counties[][want, :fips]), states...)
 end 
-handle_state(states::Int...) = _handle_state(states)
+handle_state(state::Integer) = _handle_state([state])
 
 # TODO: accept string input someday...
 _handle_state(state::String) = _handle_state(parse(Int, state))
-_handle_state(state::AbstractVector{String}) = _handle_state(parse.(Int, state))
+_handle_state(states::AbstractVector{String}) = _handle_state(parse.(Int, state))
 
 """
 Helper function to allow users to request states (including all counties)
