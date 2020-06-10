@@ -160,7 +160,7 @@ function Base.fetch(c::Client, path::Union{Symbol,String}; query=Dict())
     if !ismissing(c.apikey)
         headers[:apikey] = c.apikey
     end
-    res = HTTP.request("GET", @show(_url(path)), headers=headers, query=query)
+    res = HTTP.request("GET", _url(path), headers=headers, query=query)
     # TODO: check for error
     buf = IOBuffer(res.body)
     CSV.read(buf)
