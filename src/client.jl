@@ -67,7 +67,8 @@ function combine_filters(c::Client)
         if hasproperty(ep, filt)
             if filt == :state
                 if hasproperty(ep, :fips)
-                out[name][:fips] = _handle_state(val)
+                    out[name][:fips] = _handle_state(val)
+                    continue
                 end
             end
             out[name][filt] = val
@@ -148,7 +149,9 @@ function Base.fetch(c::Client)
         ) for (path, p_filts) in filts
     )
     dfs = Dict(path => fetch(c, path, query=filts) for (path, filts) in transformed_filts)
-    combine_dfs(dfs)
+    out = combine_dfs(dfs)
+    reset!(c)
+    out
 end
 
 "Make a single request to the API `path` using query args `query`"
