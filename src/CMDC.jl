@@ -20,7 +20,7 @@ function __init__()
     res = HTTP.request("GET", _url("swagger.json"))
     sw = JSON.parse(String(res.body))
     datasets = Symbol[]
-    
+
     # define Endpoint subtypes
     for path in keys(sw["paths"])
         occursin("swagger", path) && continue
@@ -32,18 +32,18 @@ function __init__()
         docs = make_endpoint_docs(tn, sw)
         eval(:(@doc $docs $tn))
     end
-    
+
     @eval datasets() = $datasets
     @eval export datasets
 
     # fetch list of counties for later
     _counties[] = fetch(Client(), "counties")
     _counties[][!, :state] = map(
-        x-> parse(Int, lpad(x, 5, '0')[1:2]), 
+        x -> parse(Int, lpad(x, 5, '0')[1:2]),
         CMDC._counties[][!, :fips]
     )
     nothing
-    
+
 end
 
 end # module
