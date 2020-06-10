@@ -148,7 +148,7 @@ create_filter_rhs
 function _reshape_df(df::DataFrames.DataFrame)
     size(df, 1) == 0 && return df
 
-    cols = names(df)
+    cols = map(String, names(df))
     for c in ["variable", "value"]
         if !(c in cols)
             gh_issues = "https://github.com/valorumdata/CMDC.jl/issues/new"
