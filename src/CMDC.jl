@@ -7,14 +7,7 @@ using Parameters: @with_kw
 export Client, request!
 
 const BASE_URL = "https://api.covid.valorum.ai"
-function _url(x::Union{Symbol,String}; query=Dict())
-    @show query
-    if length(query) > 0
-        qs = join(["$(k)=$(v)" for (k, v) in query], "&")
-        return string(BASE_URL, "/", x, "?", qs)
-    end
-    string(BASE_URL, "/", x)
-end
+_url(x::Union{Symbol,String}) = string(BASE_URL, "/", x)
 const _counties = Ref(DataFrames.DataFrame())
 
 include("endpoints.jl")
