@@ -18,16 +18,17 @@ df = fetch(c)
 """
 @with_kw struct Client
     apikey::Union{Missing,String} = missing
-    current_request::Dict{Symbol,Endpoint} = Dict()
+    current_request::Dict{Symbol,Endpoint} = Dict{Symbol,Endpoint}()
 
-    function Client(apikey::Missing, current_request::Dict)
+    function Client(::Missing, current_request::Dict{Symbol,Endpoint})
         # try to look up api key, b/c we didn't get one
         keyfile = _keyfile()
         if isfile(keyfile)
             return new(String(open(read, keyfile, "r")), current_request)
         end
-        new(apikey, current_request)
+        new(missing, current_request)
     end
+    Client(apikey::String, current_request::Dict{Symbol,Endpoint}) = new(apikey, current_request)
 end
 
 reset!(c::Client) = empty!(c.current_request)
@@ -45,7 +46,7 @@ function register(c::Client, email::Union{Missing,String}=missing)
     if ismissing(email)
         msg = "Please provide an email address to request a free API key: "
         print(msg)
-        @show email = readline(stdin)
+        email = readline(stdin)
         if !(occursin(r"^[^@]+@[^@]+\.[^@]+$", email))
             msg = string(
                 "We received $email, which doesn't look like an email address. ",
@@ -73,7 +74,7 @@ function register(c::Client, email::Union{Missing,String}=missing)
         "future requests unless another key is given when creating a Client."
     )
     println(msg)
-    return key
+    return Client(apikey=key)
 end
 
 
