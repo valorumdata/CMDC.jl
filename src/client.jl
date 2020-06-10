@@ -1,3 +1,5 @@
+_keyfile() = joinpath(homedir(), ".cmdc", "apikey")
+
 """
 
 Example:
@@ -6,7 +8,7 @@ Example:
 c = Client()
 
 request!(
-    c, 
+    c,
     covid(),
     economics(state="CA")
 )
@@ -17,6 +19,15 @@ df = fetch(c)
 @with_kw struct Client
     apikey::Union{Missing,String} = missing
     current_request::Dict{Symbol,Endpoint} = Dict()
+
+    function Client(apikey::Missing, current_request::Dict)
+        # try to look up api key, b/c we didn't get one
+        keyfile = _keyfile()
+        if isfile(keyfile)
+            return new(String(open(read, keyfile, "r")), current_request)
+        end
+        new(apikey, current_request)
+    end
 end
 
 reset!(c::Client) = empty!(c.current_request)
@@ -29,6 +40,42 @@ function Base.show(io::IO, ::MIME"text/plain", c::Client)
         show(io, MIME"text/plain"(), v)
     end
 end
+
+function register(c::Client, email::Union{Missing,String}=missing)
+    if ismissing(email)
+        msg = "Please provide an email address to request a free API key: "
+        print(msg)
+        @show email = readline(stdin)
+        if !(occursin(r"^[^@]+@[^@]+\.[^@]+$", email))
+            msg = string(
+                "We received $email, which doesn't look like an email address. ",
+                "Please provide a valid email address"
+            )
+            error(msg)
+        end
+    end
+    res = HTTP.request(
+        "POST",
+        _url("auth"),
+        ["Content-Type" => "application/json"],
+            JSON.json((email=email,)),
+            status_exception=false,
+    )
+    if res.status > 300
+        msg = "Error requesting API key. Message from server: $(String(res.body))"
+        error(msg)
+    end
+    # otherwise get the key, save to file, and return
+    key = JSON.parse(String(res.body))["key"]
+    open(f -> print(f, key), _keyfile(), "w")
+    msg = string(
+        "The API key has been reqeusted and will be used on all ",
+        "future requests unless another key is given when creating a Client."
+    )
+    println(msg)
+    return key
+end
+
 
 """
 Add one or more endpoints to the current request
@@ -51,7 +98,7 @@ function combine_filters(c::Client)
                 out[name][filt] = val
                 continue
             end
-            
+
             if haskey(common, filt)
                 curr = common[filt]
                 if curr != val
@@ -60,9 +107,9 @@ function combine_filters(c::Client)
             else
                 common[filt] = val
             end
-        end 
+        end
     end
-    
+
     for (name, ep) in c.current_request, (filt, val) in common
         if hasproperty(ep, filt)
             if filt == :state
@@ -74,7 +121,7 @@ function combine_filters(c::Client)
             out[name][filt] = val
         end
     end
-    
+
     out
 end
 
@@ -100,7 +147,7 @@ create_filter_rhs
 "Transform from wide to long"
 function _reshape_df(df::DataFrames.DataFrame)
     size(df, 1) == 0 && return df
-    
+
     cols = names(df)
     for c in ["variable", "value"]
         if !(c in cols)
@@ -109,11 +156,11 @@ function _reshape_df(df::DataFrames.DataFrame)
             error(msg)
         end
     end
-    
+
     if "meta_date" in cols
         if "variable" in cols
             df[!, :variable] = map(
-                xy -> "$(xy[2])_$(xy[1])", 
+                xy -> "$(xy[2])_$(xy[1])",
                 zip(df[!, :meta_date], df[!, :variable])
             )
             df = DataFrames.select(df, DataFrames.Not(:meta_date))
@@ -130,14 +177,14 @@ input frames and then merging on common columns
 function combine_dfs(dfs::Dict{Symbol,DataFrames.DataFrame})
     # reshape
     reshaped = [_reshape_df(df) for df in values(dfs)]
-    
+
     # then join on common columns
     out = reshaped[1]
     for right in reshaped[2:end]
         on = ∩(names(out), names(right))
         out = DataFrames.innerjoin(out, right, on=Symbol.(on))
     end
-    out    
+    out
 end
 
 "Execute currently built request"
@@ -169,7 +216,7 @@ end
 function _handle_state(states::AbstractVector{<:Integer})
     want = map(x -> in(x, states), CMDC._counties[][!, :state])
     return vcat(collect(_counties[][want, :fips]), states...)
-end 
+end
 _handle_state(state::Integer) = _handle_state([state])
 
 # TODO: accept string input someday...
