@@ -19,11 +19,13 @@ include("client.jl")
 function __init__()
     res = HTTP.request("GET", _url("swagger.json"))
     sw = JSON.parse(String(res.body))
+    datasets = Symbol[]
     
     # define Endpoint subtypes
     for path in keys(sw["paths"])
         occursin("swagger", path) && continue
         tn = Symbol(strip(path, '/'))
+        push!(datasets, tn)
         code = make_endpoint(tn, sw)
         eval(code)
         @eval export $tn
@@ -31,6 +33,9 @@ function __init__()
         eval(:(@doc $docs $tn))
     end
     
+    @eval datasets() = $datasets
+    @eval export datasets
+
     # fetch list of counties for later
     _counties[] = fetch(Client(), "counties")
     _counties[][!, :state] = map(
