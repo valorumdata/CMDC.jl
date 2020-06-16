@@ -42,7 +42,36 @@ function Base.show(io::IO, ::MIME"text/plain", c::Client)
     end
 end
 
+function _savekey(key::String)
+    !(isdir(dirname(_keyfile()))) && mkdir(dirname(_keyfile()))
+    open(f -> print(f, key), _keyfile(), "w")
+    msg = string(
+        "The API key has been reqeusted and will be used on all ",
+        "future requests unless another key is given when creating a Client."
+    )
+    println(msg)
+end
+
+
 function register(c::Client, email::Union{Missing,String}=missing)
+    if isfile(_keyfile())
+        msg = "An API key already exists at $(_keyfile())."
+        print(msg)
+        while true
+            print("\nWould you like to delete the existing key (y/n)? ")
+            ans = readline(stdin)
+            if lowercase(strip(ans))[1] == 'n'
+                println("Existing key will be used, no need to register")
+                return String(open(read, _keyfile(), "r"))
+            end
+            if lowercase(strip(ans))[1] == 'y'
+                rm(_keyfile())
+                break
+            end
+            println("Answer not understood, please try again")
+        end
+    end
+
     if ismissing(email)
         msg = "Please provide an email address to request a free API key: "
         print(msg)
@@ -62,18 +91,28 @@ function register(c::Client, email::Union{Missing,String}=missing)
             JSON.json((email=email,)),
             status_exception=false,
     )
-    if res.status > 300
+    @show res.status
+    if res.status == 409
+        # already exists
+        res2 = HTTP.request("GET", _url("auth/$(email)"))
+        @show res2
+        if res2.status != 200
+            msg = string(
+                "Email address already in use. Failed to fetch existing key. ",
+                "Message from server was $(String(res.body))"
+            )
+            error(msg)
+        end
+        key = JSON.parse(String(res2.body))["key"]
+        _savekey(key)
+        return Client(apikey=key)
+    elseif res.status > 300
         msg = "Error requesting API key. Message from server: $(String(res.body))"
         error(msg)
     end
     # otherwise get the key, save to file, and return
     key = JSON.parse(String(res.body))["key"]
-    open(f -> print(f, key), _keyfile(), "w")
-    msg = string(
-        "The API key has been reqeusted and will be used on all ",
-        "future requests unless another key is given when creating a Client."
-    )
-    println(msg)
+    _savekey(key)
     return Client(apikey=key)
 end
 
