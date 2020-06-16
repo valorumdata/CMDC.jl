@@ -23,6 +23,11 @@ More information about our project and what data is collected can be found on ou
 
 We are always looking to hear from both those who would like to help us build CMDC and those who would like use CMDC. [Please reach out to us](https://covid.valorum.ai/contact)!
 
+## Install
+
+Enter package mode (using `]`) and then input `add https://github.com/valorumdata/CMDC.jl`
+
+
 ## Datasets
 
 You can see a list of currently available datasets using:
