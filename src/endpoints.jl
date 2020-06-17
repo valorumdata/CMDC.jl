@@ -26,15 +26,15 @@ function get_endpoint_params(fn::Symbol, sw::Dict)
     prefix = "#/parameters/"
     params = sw["paths"]["/$(fn)"]["get"]["parameters"]
     specs = Dict[]
-    
+
     for param in params
         length(param) != 1 && continue
         haskey(param, thekey) || continue
-        
+
         pname = param[thekey]
         startswith(pname, prefix) || continue
-        
-        param_spec = sw["parameters"][replace(pname, prefix => "")] 
+
+        param_spec = sw["parameters"][replace(pname, prefix => "")]
         param_spec["in"] === "query" && push!(specs, param_spec)
     end
     specs
@@ -47,7 +47,7 @@ function make_endpoint(fn::Symbol, sw::Dict)
     for spec in specs
         param_sym = Symbol(spec["name"])
         push!(fields, Expr(:(=), param_sym, :missing))
-        param_sym == :fips && push!(fields, Expr(:(=), :state, :missing))
+        param_sym == :location && push!(fields, Expr(:(=), :state, :missing))
     end
     out = :(
         @with_kw struct $(fn) <: Endpoint

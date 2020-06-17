@@ -37,10 +37,10 @@ function __init__()
     @eval export datasets
 
     # fetch list of counties for later
-    _counties[] = fetch(Client(), "counties")
+    _counties[] = fetch(Client(), "us_counties")
     _counties[][!, :state] = map(
         x -> parse(Int, lpad(x, 5, '0')[1:2]),
-        CMDC._counties[][!, :fips]
+        CMDC._counties[][!, :location]
     )
     nothing
 

@@ -153,8 +153,8 @@ function combine_filters(c::Client)
     for (name, ep) in c.current_request, (filt, val) in common
         if hasproperty(ep, filt)
             if filt == :state
-                if hasproperty(ep, :fips)
-                    out[name][:fips] = _handle_state(val)
+                if hasproperty(ep, :location)
+                    out[name][:location] = _handle_state(val)
                     continue
                 end
             end
@@ -255,7 +255,7 @@ end
 
 function _handle_state(states::AbstractVector{<:Integer})
     want = map(x -> in(x, states), CMDC._counties[][!, :state])
-    return vcat(collect(_counties[][want, :fips]), states...)
+    return vcat(collect(_counties[][want, :location]), states...)
 end
 _handle_state(state::Integer) = _handle_state([state])
 

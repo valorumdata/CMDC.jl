@@ -5,19 +5,19 @@ c = Client()
 
 
 function multiple_dataset_all(c=Client())
-    request!(c, demographics(), covid())
+    request!(c, demographics(), covid_us())
     fetch(c)
 end
 
 
 function multiple_dataset_states_only(c=Client())
-    request!(c, demographics(), covid(fips="<100"))
+    request!(c, demographics(), covid_us(location="<100"))
     fetch(c)
 end
 
 
 function multiple_dataset_counties_only(c=Client())
-    request!(c, demographics(), covid(fips=">1000"))
+    request!(c, demographics(), covid_us(location=">1000"))
     fetch(c)
 end
 
@@ -29,7 +29,7 @@ end
 
 
 function single_dataset_deaths_filter(c=Client())
-    request!(c, covid(fips="<100", variable="deaths_total", value=">100"))
+    request!(c, covid_us(location="<100", variable="deaths_total", value=">100"))
 
     fetch(c)
 end
