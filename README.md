@@ -1,5 +1,14 @@
 # CMDC.jl
 
+**Notice**: The `CMDD.jl` library has been renamed to `CovidCountyData.jl`
+
+Please use that package instead of this one. See the [CovidCountyData.jl package on GitHub](https://github.com/CovidCountyData/CovidCountyData.jl) for more information
+
+This package will remain active for historical users of `CMDC.jl`, but we strongly encourage all users to upgrade to the new package to continue receiving new features and bug fixes.
+
+# Old documentation
+
+
 Welcome to the Julia client library for accessing the COVID Modeling Data Collaborative (CMDC) database.
 
 Links:
